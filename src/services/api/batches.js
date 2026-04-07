@@ -157,8 +157,20 @@ export const batchesAPI = {
     return data;
   },
 
-  // Mark batch as expired (change status)
+  // Mark batch as expired - also moves inventory qty from Good to Expired condition
   async markAsExpired(batchId) {
+    // Step 1: Get batch details before updating
+    const { data: batch, error: fetchError } = await supabase
+      .from('inventory_batches')
+      .select('*')
+      .eq('batch_id', batchId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const qtyToExpire = batch.quantity_remaining || 0;
+
+    // Step 2: Mark batch as Inactive (expired)
     const { data, error } = await supabase
       .from('inventory_batches')
       .update({ 
@@ -170,6 +182,70 @@ export const batchesAPI = {
       .single();
     
     if (error) throw error;
+
+    if (qtyToExpire > 0) {
+      // Step 3: Deduct from Good condition inventory
+      const { data: goodRow } = await supabase
+        .from('inventory')
+        .select('inventory_id, quantity_available')
+        .eq('variant_id', batch.variant_id)
+        .eq('warehouse_id', batch.warehouse_id)
+        .eq('condition', 'Good')
+        .single();
+
+      if (goodRow) {
+        await supabase
+          .from('inventory')
+          .update({
+            quantity_available: Math.max((goodRow.quantity_available || 0) - qtyToExpire, 0),
+            updated_at: new Date().toISOString()
+          })
+          .eq('inventory_id', goodRow.inventory_id);
+      }
+
+      // Step 4: Add to Expired condition inventory (upsert)
+      const { data: expiredRow } = await supabase
+        .from('inventory')
+        .select('inventory_id, quantity_available')
+        .eq('variant_id', batch.variant_id)
+        .eq('warehouse_id', batch.warehouse_id)
+        .eq('condition', 'Expired')
+        .maybeSingle();
+
+      if (expiredRow) {
+        await supabase
+          .from('inventory')
+          .update({
+            quantity_available: (expiredRow.quantity_available || 0) + qtyToExpire,
+            updated_at: new Date().toISOString()
+          })
+          .eq('inventory_id', expiredRow.inventory_id);
+      } else {
+        await supabase
+          .from('inventory')
+          .insert({
+            variant_id: batch.variant_id,
+            warehouse_id: batch.warehouse_id,
+            quantity_available: qtyToExpire,
+            quantity_reserved: 0,
+            condition: 'Expired'
+          });
+      }
+
+      // Step 5: Log stock movement
+      await supabase.from('stock_movements').insert({
+        variant_id: batch.variant_id,
+        warehouse_id: batch.warehouse_id,
+        movement_type: 'Expiry',
+        quantity: -qtyToExpire,
+        quantity_before: goodRow?.quantity_available || 0,
+        quantity_after: Math.max((goodRow?.quantity_available || 0) - qtyToExpire, 0),
+        reference_type: 'batch',
+        reference_id: batchId,
+        notes: `Batch ${batch.batch_number} marked as expired`
+      });
+    }
+
     return data;
   },
 

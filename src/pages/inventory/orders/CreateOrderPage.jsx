@@ -125,7 +125,14 @@ export default function CreateOrderPage() {
       ));
     } else {
       const product = products.find(p => p.product_id === variant.product_id);
-      const inventoryRecord = inventory.find(i => i.variant_id === variant.variant_id);
+      // Sum quantity_unreserved across Good condition rows only, exclude inactive/expired
+      const goodRows = inventory.filter(i => 
+        i.variant_id === variant.variant_id && 
+        i.condition === 'Good' &&
+        i.variant_status !== 'Inactive' &&
+        i.stock_status !== 'Expired'
+      );
+      const availableStock = goodRows.reduce((sum, i) => sum + (i.quantity_unreserved || 0), 0);
       
       setOrderItems([...orderItems, {
         variant_id: variant.variant_id,
@@ -135,7 +142,7 @@ export default function CreateOrderPage() {
         quantity: 1,
         unit_price: parseFloat(variant.unit_price),
         discount_amount: 0,
-        available_stock: inventoryRecord?.quantity_unreserved || 0
+        available_stock: availableStock
       }]);
     }
   };
@@ -630,8 +637,14 @@ function EnhancedVariantSelector({ variants, products, brands, categories, inven
         <div className="border rounded-lg divide-y max-h-96 overflow-y-auto">
           {filteredVariants.map((variant) => {
             const product = products.find(p => p.product_id === variant.product_id);
-            const stock = inventory.find(i => i.variant_id === variant.variant_id);
-            const availableStock = stock?.quantity_unreserved || 0;
+            // Sum unreserved across Good condition rows, exclude inactive/expired
+            const goodRows = inventory.filter(i => 
+              i.variant_id === variant.variant_id && 
+              i.condition === 'Good' &&
+              i.variant_status !== 'Inactive' &&
+              i.stock_status !== 'Expired'
+            );
+            const availableStock = goodRows.reduce((sum, i) => sum + (i.quantity_unreserved || 0), 0);
             
             return (
               <button

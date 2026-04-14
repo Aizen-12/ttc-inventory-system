@@ -96,7 +96,14 @@ async updateStatus(id, status, userId) {
   if (error) throw error;
   return data;
 },
-// Cancel order with reason
+  // Cancel order with reason.
+  // Stock release is handled entirely by the DB trigger
+  // handle_order_cancellation (BEFORE UPDATE on orders) which:
+  //   1. Releases quantity_reserved via inventory_reservations records
+  //   2. Cancels all active reservations for the order
+  //   3. Sets payment_status = 'Refunded' if order was already paid
+  //   4. Inserts cancellation notifications
+  // No JS-side inventory manipulation needed or safe here.
   async cancelOrder(id, cancellationReason = null) {
     const updates = {
       order_status: 'Cancelled',
@@ -111,7 +118,7 @@ async updateStatus(id, status, userId) {
       .eq('order_id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },

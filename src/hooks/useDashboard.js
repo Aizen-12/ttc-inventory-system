@@ -98,9 +98,11 @@ export function useDashboard() {
       ) || [];
 
       // === INVENTORY STATS ===
+      // v_inventory_summary is a flat view — fields like reorder_level,
+      // unit_price, and stock_status are top-level, not nested under variant
       const lowStock = inventory?.filter(inv => {
         const available = inv.quantity_available || 0;
-        const reorderLevel = inv.variant?.reorder_level || inv.reorder_level || 10;
+        const reorderLevel = inv.reorder_level || 10;
         return available > 0 && available <= reorderLevel;
       }) || [];
 
@@ -110,8 +112,8 @@ export function useDashboard() {
 
       const inventoryValue = inventory?.reduce((sum, inv) => {
         const qty = inv.quantity_available || 0;
-        const price = inv.variant?.unit_price || inv.unit_price || 0;
-        return sum + (qty * parseFloat(price));
+        const price = parseFloat(inv.unit_price || 0);
+        return sum + (qty * price);
       }, 0) || 0;
 
       // === CUSTOMER STATS ===

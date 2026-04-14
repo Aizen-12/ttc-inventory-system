@@ -48,7 +48,7 @@ export default function ProcurementsPage() {
 
   return (
     <div>
-      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>

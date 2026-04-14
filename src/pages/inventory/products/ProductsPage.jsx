@@ -88,7 +88,7 @@ const handleSaveVariant = async (variantData) => {
   return (
     <div>
           <div className="flex items-center mb-6">
-            <button onClick={() => navigate('/Dashboard')} className="flex items-center text-gray-500 hover:text-gray-700">
+            <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-500 hover:text-gray-700">
               <ChevronLeft className="mr-2" size={20} />
               <span className="text-sm">Back to Dashboard</span>
             </button>

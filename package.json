@@ -9,7 +9,6 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
     "bcryptjs": "^3.0.3",
-    "bcryptjs-react": "^2.4.6",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

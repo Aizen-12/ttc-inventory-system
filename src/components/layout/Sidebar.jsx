@@ -21,14 +21,19 @@ import {
   Users,
   Shield
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ sidebarOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+
+  const isAdmin = user?.role === 'Admin';
+  const isManagerOrAbove = ['Admin', 'Manager'].includes(user?.role);
 
   return (
     <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-white border-r transition-all duration-300 overflow-hidden`}>
@@ -43,9 +48,9 @@ export default function Sidebar({ sidebarOpen }) {
             Dashboard
           </p>
           <button
-            onClick={() => navigate('/Dashboard')}
+            onClick={() => navigate('/dashboard')}
             className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg ${
-              isActive('/Dashboard') && location.pathname === '/Dashboard'
+              isActive('/dashboard')
                 ? 'bg-blue-50 text-blue-600'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
@@ -201,8 +206,8 @@ export default function Sidebar({ sidebarOpen }) {
             Management
           </p>
 
-          {/*Users*/}
-          
+          {/* Users — Admin only */}
+          {isAdmin && (
             <button
               onClick={() => navigate('/users')}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg mb-1 ${
@@ -214,7 +219,10 @@ export default function Sidebar({ sidebarOpen }) {
               <Users size={18} />
               <span>Users</span>
             </button>
+          )}
 
+          {/* Permissions — Admin only */}
+          {isAdmin && (
             <button
               onClick={() => navigate('/permissions')}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg mb-1 ${
@@ -226,6 +234,7 @@ export default function Sidebar({ sidebarOpen }) {
               <Shield size={18} />
               <span>Permissions</span>
             </button>
+          )}
           
 
           {/* Customers */}
@@ -254,17 +263,20 @@ export default function Sidebar({ sidebarOpen }) {
             <span>Vendors</span>
           </button>
 
+          {/* Audit Logs — Manager and Admin only */}
+          {isManagerOrAbove && (
             <button
-            onClick={() => navigate('/audit')}
-            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg ${
-              isActive('/audit-logs')
-                ? 'bg-blue-50 text-blue-600'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <FileText size={18} />
-            <span>Audit Logs</span>
-          </button>
+              onClick={() => navigate('/audit')}
+              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg ${
+                isActive('/audit')
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <FileText size={18} />
+              <span>Audit Logs</span>
+            </button>
+          )}
           </div>
 
         <div className="mb-6">

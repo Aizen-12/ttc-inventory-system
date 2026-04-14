@@ -70,6 +70,19 @@ export default function SettingsPage() {
     );
   }
 
+  // Empty state — system_settings table has no rows yet (fresh install)
+  const hasSettings = groupedSettings && Object.values(groupedSettings).some(arr => arr.length > 0);
+  if (!hasSettings) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <div className="text-gray-400 mb-2">No settings found</div>
+        <div className="text-sm text-gray-400">
+          Run the settings seed SQL in your Supabase dashboard to populate default values.
+        </div>
+      </div>
+    );
+  }
+
   const tabs = [
     { id: 'general', name: 'General', icon: <Building size={18} /> },
     { id: 'inventory', name: 'Inventory', icon: <Package size={18} /> },
@@ -80,7 +93,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>

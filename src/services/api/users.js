@@ -48,7 +48,7 @@ export async function createUser(userData) {
     await auditLogsAPI.logAudit({
       action: 'INSERT',
       table_name: 'users',
-      record_id: data.user_id,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       new_values: { username: data.username, role: data.role, email: data.email }
     });
 
@@ -126,7 +126,7 @@ export async function updateUser(userId, updates) {
     await auditLogsAPI.logAudit({
       action: 'UPDATE',
       table_name: 'users',
-      record_id: userId,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       old_values: oldData,
       new_values: data
     });
@@ -165,7 +165,7 @@ export async function changePassword(userId, currentPassword, newPassword) {
     await auditLogsAPI.logAudit({
       action: 'UPDATE',
       table_name: 'users',
-      record_id: userId,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       new_values: { action: 'password_changed' }
     });
 
@@ -191,7 +191,7 @@ export async function resetUserPassword(userId, newPassword) {
     await auditLogsAPI.logAudit({
       action: 'UPDATE',
       table_name: 'users',
-      record_id: userId,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       new_values: { action: 'password_reset_by_admin' }
     });
 
@@ -220,7 +220,7 @@ export async function deleteUser(userId, deletedBy) {
     await auditLogsAPI.logAudit({
       action: 'DELETE',
       table_name: 'users',
-      record_id: userId,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       old_values: oldData,
       new_values: { deleted: true, deleted_by: deletedBy }
     });
@@ -244,7 +244,7 @@ export async function activateUser(userId) {
     await auditLogsAPI.logAudit({
       action: 'UPDATE',
       table_name: 'users',
-      record_id: userId,
+      record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
       new_values: { action: 'user_activated', status: 'Active' }
     });
 
@@ -314,7 +314,7 @@ export async function bulkUpdateUsers(userIds, updates) {
       await auditLogsAPI.logAudit({
         action: 'UPDATE',
         table_name: 'users',
-        record_id: userId,
+        record_id: null, // user_id is UUID; audit_logs.record_id is INTEGER
         new_values: { ...updates, bulk_update: true }
       });
     }

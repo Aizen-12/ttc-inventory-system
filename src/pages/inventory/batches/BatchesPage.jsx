@@ -9,6 +9,7 @@ import { useVariants } from '../../../hooks/useVariants';
 import { useProducts } from '../../../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
 import { batchesAPI } from '../../../services/api/batches';
+import { exportToPDF } from '../../../utils/exportPDF';
 import BatchForm from './BatchForm';
 import { showSuccess, showError, showConfirm } from '../../../utils/alerts';
 
@@ -126,27 +127,23 @@ export default function BatchesPage() {
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ['Batch Number', 'Product', 'Variant', 'SKU', 'Warehouse', 'Quantity', 'Manufactured', 'Expiry', 'Status'];
-    const rows = filteredBatches.map(b => [
-      b.batch_number,
-      b.variant?.product?.product_name || '',
-      b.variant?.variant_name || '',
-      b.variant?.sku || '',
-      b.warehouse?.warehouse_name || '',
-      b.quantity_remaining,
-      b.manufacture_date || '',
-      b.expiry_date || '',
-      b.status
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `inventory-batches-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const exportToPDFReport = async () => {
+    await exportToPDF({
+      title: 'Inventory Batches & Expiry Report',
+      filename: 'inventory-batches',
+      headers: ['Batch Number', 'Product', 'Variant', 'SKU', 'Warehouse', 'Qty Remaining', 'Manufactured', 'Expiry', 'Status'],
+      rows: filteredBatches.map(b => [
+        b.batch_number,
+        b.variant?.product?.product_name || '',
+        b.variant?.variant_name || '',
+        b.variant?.sku || '',
+        b.warehouse?.warehouse_name || '',
+        b.quantity_remaining,
+        b.manufacture_date || '-',
+        b.expiry_date || '-',
+        b.status
+      ])
+    });
   };
 
   if (loading) {
@@ -167,7 +164,7 @@ export default function BatchesPage() {
 
   return (
     <div>
-      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>
@@ -182,11 +179,11 @@ export default function BatchesPage() {
 
         <div className="flex items-center space-x-3">
           <button
-            onClick={exportToCSV}
+            onClick={exportToPDFReport}
             className="px-4 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50 flex items-center space-x-2"
           >
             <Download size={18} />
-            <span>Export</span>
+            <span>Export PDF</span>
           </button>
           <button
             onClick={() => setShowForm(true)}

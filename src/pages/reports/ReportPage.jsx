@@ -1,6 +1,7 @@
 // ==================================
 // FILE: src/pages/reports/ReportsPage.jsx
 // ==================================
+import { exportToPDF } from '../../utils/exportPDF';
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, TrendingUp, Package, Users, DollarSign, ShoppingCart, Download, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -45,22 +46,26 @@ export default function ReportsPage() {
     }
   };
 
-  const exportToCSV = (data, filename) => {
-    const headers = Object.keys(data[0] || {});
-    const rows = data.map(row => headers.map(h => row[h] || '').join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const exportToCSV = async (data, filename, reportTitle) => {
+    if (!data || data.length === 0) return;
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => headers.map(h => {
+      const v = row[h];
+      if (v === null || v === undefined) return '-';
+      if (typeof v === 'number') return v.toLocaleString();
+      return String(v);
+    }));
+    await exportToPDF({
+      title: reportTitle || filename,
+      filename,
+      headers,
+      rows
+    });
   };
 
   return (
     <div>
-      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>
@@ -146,11 +151,11 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Daily Sales Trend</h2>
                 <button
-                  onClick={() => exportToCSV(dailyTrend, 'daily-sales-trend')}
+                  onClick={() => exportToCSV(dailyTrend, 'daily-sales-trend', 'Daily Sales Trend')}
                   className="text-sm text-purple-600 hover:text-purple-800 flex items-center space-x-1"
                 >
                   <Download size={14} />
-                  <span>Export</span>
+                  <span>Export PDF</span>
                 </button>
               </div>
               <SimpleTrendChart data={dailyTrend} />
@@ -161,7 +166,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Sales by Category</h2>
                 <button
-                  onClick={() => exportToCSV(salesByCategory, 'sales-by-category')}
+                  onClick={() => exportToCSV(salesByCategory, 'sales-by-category', 'Sales by Category')}
                   className="text-sm text-purple-600 hover:text-purple-800 flex items-center space-x-1"
                 >
                   <Download size={14} />
@@ -187,11 +192,11 @@ export default function ReportsPage() {
             <div className="p-6 border-b flex items-center justify-between">
               <h2 className="text-lg font-semibold">Top Selling Products</h2>
               <button
-                onClick={() => exportToCSV(salesByProduct, 'top-products')}
+                onClick={() => exportToCSV(salesByProduct, 'top-products', 'Top Products Report')}
                 className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center space-x-2"
               >
                 <Download size={16} />
-                <span>Export CSV</span>
+                <span>Export PDF</span>
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -229,11 +234,11 @@ export default function ReportsPage() {
             <div className="p-6 border-b flex items-center justify-between">
               <h2 className="text-lg font-semibold">Top Customers</h2>
               <button
-                onClick={() => exportToCSV(topCustomers, 'top-customers')}
-                className="text-sm text-purple-600 hover:text-purple-800 flex items-center space-x-1"
+                onClick={() => exportToCSV(topCustomers, 'top-customers', 'Top Customers Report')}
+                className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center space-x-2"
               >
                 <Download size={14} />
-                <span>Export</span>
+                <span>Export PDF</span>
               </button>
             </div>
             <div className="overflow-x-auto">

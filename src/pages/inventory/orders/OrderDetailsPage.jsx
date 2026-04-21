@@ -4,16 +4,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Package, User, CreditCard, Truck, Calendar, AlertTriangle } from 'lucide-react';
-import Swal from 'sweetalert2';
 import { ordersAPI } from '../../../services/api/orders';
 import OrderStatusBadge from './OrderStatusBadge';
 import { showSuccess, showError, showConfirm, showLoading, closeLoading } from '../../../utils/alerts';
-import { useAuth } from '../../../context/AuthContext';
 
 export default function OrderDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,7 +47,7 @@ export default function OrderDetailsPage() {
     
     try {
       showLoading('Updating status...');
-      await ordersAPI.updateStatus(id, newStatus, user?.user_id);
+      await ordersAPI.updateStatus(id, newStatus, null);
       await fetchOrder();
       closeLoading();
       showSuccess(`Order status updated to ${newStatus}!`);
@@ -61,32 +58,27 @@ export default function OrderDetailsPage() {
   };
 
   const handleCancelOrder = async () => {
+    // Check if order can be cancelled
     if (['Shipped', 'Delivered'].includes(order.order_status)) {
       showError('Cannot cancel an order that has already been shipped or delivered.', 'Cancellation Not Allowed');
       return;
     }
 
-    // Use Swal directly since showConfirm doesn't support an input field
-    const { isConfirmed, value: reason } = await Swal.fire({
-      icon: 'warning',
-      title: 'Cancel Order',
-      text: 'Are you sure you want to cancel this order? This action cannot be undone.',
-      input: 'text',
-      inputPlaceholder: 'Enter cancellation reason (optional)',
-      showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Yes, cancel it',
-      cancelButtonText: 'Go back'
-    });
-
-    if (!isConfirmed) return;
-
+    const { value: reason } = await showConfirm(
+      'Are you sure you want to cancel this order? This action cannot be undone.',
+      'Cancel Order',
+      true, // Show input for cancellation reason
+      'Enter cancellation reason (optional)'
+    );
+    
+    if (!reason && reason !== '') return; // User clicked cancel
+    
     try {
       showLoading('Cancelling order...');
-      await ordersAPI.cancelOrder(id, reason || null);
+      await ordersAPI.cancelOrder(id, reason);
       await fetchOrder();
       closeLoading();
+      
       if (order.payment_status === 'Paid') {
         showSuccess('Order cancelled successfully! Refund has been initiated.', 'Order Cancelled');
       } else {
@@ -119,24 +111,18 @@ export default function OrderDetailsPage() {
   };
 
   const handleMarkAsFailed = async () => {
-    const { isConfirmed, value: reason } = await Swal.fire({
-      icon: 'warning',
-      title: 'Payment Failed',
-      text: 'Mark this payment as failed?',
-      input: 'text',
-      inputPlaceholder: 'Enter failure reason (optional)',
-      showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Yes, mark as failed',
-      cancelButtonText: 'Cancel'
-    });
-
-    if (!isConfirmed) return;
-
+    const { value: reason } = await showConfirm(
+      'Mark this payment as failed?',
+      'Payment Failed',
+      true,
+      'Enter failure reason (optional)'
+    );
+    
+    if (!reason && reason !== '') return;
+    
     try {
       showLoading('Marking payment as failed...');
-      await ordersAPI.updatePaymentStatus(id, 'Failed', reason || null);
+      await ordersAPI.updatePaymentStatus(id, 'Failed', reason);
       await fetchOrder();
       closeLoading();
       showSuccess('Payment marked as failed', 'Payment Updated');

@@ -1,6 +1,7 @@
 // ==================================
 // FILE: src/pages/reports/InventoryReportsPage.jsx
 // ==================================
+import { exportToPDF } from '../../utils/exportPDF';
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Package, AlertTriangle, TrendingUp, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -34,29 +35,21 @@ export default function InventoryReportsPage() {
     }
   };
 
-  const exportToCSV = (data, filename) => {
-    const rows = data.map(item => ({
-      Product: item.variant?.product?.product_name || '',
-      Variant: item.variant?.variant_name || '',
-      SKU: item.variant?.sku || '',
-      Warehouse: item.warehouse?.warehouse_name || '',
-      'Quantity Available': item.quantity_available,
-      'Unit Cost': item.unit_cost || item.variant?.unit_cost || 0,
-      'Total Value': item.total_value || (item.quantity_available * (item.variant?.unit_price || 0))
-    }));
-
-    const headers = Object.keys(rows[0] || {});
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => headers.map(h => row[h] || '').join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const exportToCSV = async (data, filename, reportTitle) => {
+    await exportToPDF({
+      title: reportTitle || filename,
+      filename,
+      headers: ['Product', 'Variant', 'SKU', 'Warehouse', 'Qty Available', 'Unit Cost', 'Total Value'],
+      rows: data.map(item => [
+        item.variant?.product?.product_name || '',
+        item.variant?.variant_name || '',
+        item.variant?.sku || '',
+        item.warehouse?.warehouse_name || '',
+        item.quantity_available,
+        `₱${(item.unit_cost || item.variant?.unit_cost || 0).toLocaleString()}`,
+        `₱${(item.total_value || (item.quantity_available * (item.variant?.unit_price || 0))).toLocaleString()}`
+      ])
+    });
   };
 
   return (
@@ -119,11 +112,11 @@ export default function InventoryReportsPage() {
                 </span>
               </div>
               <button
-                onClick={() => exportToCSV(lowStock, 'low-stock-items')}
+                onClick={() => exportToCSV(lowStock, 'low-stock-items', 'Low Stock Items Report')}
                 className="px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center space-x-2"
               >
                 <Download size={16} />
-                <span>Export</span>
+                <span>Export PDF</span>
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -182,11 +175,11 @@ export default function InventoryReportsPage() {
                 </span>
               </div>
               <button
-                onClick={() => exportToCSV(overstocked, 'overstocked-items')}
+                onClick={() => exportToCSV(overstocked, 'overstocked-items', 'Overstocked Items Report')}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
               >
                 <Download size={16} />
-                <span>Export</span>
+                <span>Export PDF</span>
               </button>
             </div>
             <div className="overflow-x-auto">

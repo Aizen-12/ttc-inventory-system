@@ -34,7 +34,7 @@ export const reportsAPI = {
           )
         )
       `)
-      .not('order_status', 'in', '(Cancelled,Archived)')
+      .not('order_status', 'in', '("Cancelled","Archived")')
       .is('deleted_at', null)
       .order('order_date', { ascending: false });
 

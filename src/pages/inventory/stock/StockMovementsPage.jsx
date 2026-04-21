@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, History, Search, Filter, Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { useStockMovements } from '../../../hooks/useStockMovements';
+import { exportToPDF } from '../../../utils/exportPDF';
 import { useWarehouses } from '../../../hooks/useWarehouses';
 import { useVariants } from '../../../hooks/useVariants';
 import { useProducts } from '../../../hooks/useProducts';
@@ -86,28 +87,24 @@ export default function StockMovementsPage() {
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ['Date', 'Product', 'Variant', 'SKU', 'Type', 'Quantity', 'Before', 'After', 'Warehouse', 'Reference'];
-    const rows = filteredMovements.map(m => [
-      new Date(m.created_at).toLocaleDateString(),
-      m.variant?.product?.product_name || '',
-      m.variant?.variant_name || '',
-      m.variant?.sku || '',
-      m.movement_type,
-      m.quantity,
-      m.quantity_before,
-      m.quantity_after,
-      m.warehouse?.warehouse_name || '',
-      m.reference_type ? `${m.reference_type} #${m.reference_id}` : ''
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `stock-movements-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const exportToPDFReport = async () => {
+    await exportToPDF({
+      title: 'Stock Movements Report',
+      filename: 'stock-movements',
+      headers: ['Date', 'Product', 'Variant', 'SKU', 'Type', 'Qty', 'Before', 'After', 'Warehouse', 'Reference'],
+      rows: filteredMovements.map(m => [
+        new Date(m.created_at).toLocaleDateString(),
+        m.variant?.product?.product_name || '',
+        m.variant?.variant_name || '',
+        m.variant?.sku || '',
+        m.movement_type,
+        m.quantity,
+        m.quantity_before,
+        m.quantity_after,
+        m.warehouse?.warehouse_name || '',
+        m.reference_type ? `${m.reference_type} #${m.reference_id}` : '-'
+      ])
+    });
   };
 
   if (loading) {
@@ -128,7 +125,7 @@ export default function StockMovementsPage() {
 
   return (
     <div>
-      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>
@@ -180,11 +177,11 @@ export default function StockMovementsPage() {
             )}
           </button>
             <button
-          onClick={exportToCSV}
+          onClick={exportToPDFReport}
           className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
         >
           <Download size={18} />
-          <span>Export CSV</span>
+          <span>Export PDF</span>
         </button>
         </div>
 

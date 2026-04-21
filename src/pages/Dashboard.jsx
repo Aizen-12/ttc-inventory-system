@@ -34,8 +34,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-gray-500">Loading dashboard...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading Dashboard...</div>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function Dashboard() {
           subtitle="In progress"
           icon={<Truck className="text-blue-600" size={24} />}
           color="blue"
-          onClick={() => navigate('/orders?status=Processing,Shipped')}
+          onClick={() => navigate('/inventory/orders')}
         />
 
         <StatsCard

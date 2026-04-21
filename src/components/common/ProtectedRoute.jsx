@@ -3,13 +3,10 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-// Usage:
-//   <ProtectedRoute>…</ProtectedRoute>                        — any logged-in user
-//   <ProtectedRoute roles={['Admin']}>…</ProtectedRoute>      — Admin only
-//   <ProtectedRoute roles={['Admin','Manager']}>…</ProtectedRoute>
-export default function ProtectedRoute({ children, roles }) {
+export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
+  // Show loading spinner while checking auth
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -21,15 +18,11 @@ export default function ProtectedRoute({ children, roles }) {
     );
   }
 
-  // Not logged in → go to login
+  // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Logged in but wrong role → go to dashboard
-  if (roles && roles.length > 0 && !roles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  // Render protected content
   return children;
 }

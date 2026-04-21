@@ -7,6 +7,7 @@ import { useAuditLogs } from '../../hooks/useAuditLogs';
 import { useUsers } from '../../hooks/useUsers';
 import { useNavigate } from 'react-router-dom';
 import { auditLogsAPI } from '../../services/api/audit';
+import { exportToPDF } from '../../utils/exportPDF';
 import LogDetailsModal from './LogDetailsModal';
 
 export default function AuditLogsPage() {
@@ -89,24 +90,20 @@ export default function AuditLogsPage() {
     );
   };
 
-  const exportToCSV = () => {
-    const headers = ['Date/Time', 'User', 'Action', 'Table', 'Record ID', 'IP Address'];
-    const rows = filteredLogs.map(log => [
-      new Date(log.created_at).toLocaleString(),
-      log.user?.full_name || 'System',
-      log.action,
-      log.table_name,
-      log.record_id || '-',
-      log.ip_address || '-'
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const exportToPDFReport = async () => {
+    await exportToPDF({
+      title: 'Audit Logs Report',
+      filename: 'audit-logs',
+      headers: ['Date/Time', 'User', 'Action', 'Table', 'Record ID', 'IP Address'],
+      rows: filteredLogs.map(log => [
+        new Date(log.created_at).toLocaleString(),
+        log.user?.full_name || 'System',
+        log.action,
+        log.table_name,
+        log.record_id || '-',
+        log.ip_address || '-'
+      ])
+    });
   };
 
   const uniqueTables = [...new Set(logs.map(l => l.table_name))].sort();
@@ -129,7 +126,7 @@ export default function AuditLogsPage() {
 
   return (
     <div>
-      <div onClick={() => navigate('/dashboard')} className="flex items-center mb-6 cursor-pointer">
+      <div onClick={() => navigate('/Dashboard')} className="flex items-center mb-6 cursor-pointer">
         <ChevronLeft className="text-gray-400 mr-2" size={20} />
         <span className="text-sm text-gray-500">Back to Dashboard</span>
       </div>
@@ -143,11 +140,11 @@ export default function AuditLogsPage() {
         </div>
 
         <button
-          onClick={exportToCSV}
+          onClick={exportToPDFReport}
           className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 flex items-center space-x-2"
         >
           <Download size={18} />
-          <span>Export CSV</span>
+          <span>Export PDF</span>
         </button>
       </div>
 

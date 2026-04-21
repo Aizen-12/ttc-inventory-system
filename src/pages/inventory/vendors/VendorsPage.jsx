@@ -67,7 +67,7 @@ const handleDelete = async (id) => {
   return (
     <div>
       <div className="flex items-center mb-6">
-                  <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-500 hover:text-gray-700">
+                  <button onClick={() => navigate('/Dashboard')} className="flex items-center text-gray-500 hover:text-gray-700">
                     <ChevronLeft className="mr-2" size={20} />
                     <span className="text-sm">Back to Dashboard</span>
                   </button>
@@ -77,7 +77,7 @@ const handleDelete = async (id) => {
         <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
           <Truck className="text-indigo-600" size={20} />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Vendor Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Supplier Management</h1>
       </div>
 
       <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">

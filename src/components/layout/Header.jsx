@@ -71,7 +71,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
               
               <button onClick={() => navigate('/profile')}
             className={`w-full flex items-center space-x-2 px-4 py-2 text-sm ${
-              isActive('/profile')
+              isActive('/notifications')
                 ? 'bg-blue-50 text-blue-600'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
@@ -80,10 +80,9 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
                 <span>My Profile</span>
               </button>
               
-              {user?.role === 'Admin' && (
               <button onClick={() => navigate('/settings')}
             className={`w-full flex items-center space-x-2 px-4 py-2 text-sm ${
-              isActive('/settings')
+              isActive('/notifications')
                 ? 'bg-blue-50 text-blue-600'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
@@ -91,7 +90,6 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
                 <Settings size={16} />
                 <span>Settings</span>
               </button>
-              )}
               
               <div className="border-t my-1"></div>
               

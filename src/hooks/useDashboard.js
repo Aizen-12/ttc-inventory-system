@@ -67,8 +67,9 @@ export function useDashboard() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
       // === SALES CALCULATIONS ===
+      // Include Delivered orders regardless of payment status to capture COD revenue
       const completedOrders = orders?.filter(o => 
-        o.order_status === 'Delivered' && o.payment_status === 'Paid'
+        o.order_status === 'Delivered'
       ) || [];
 
       const todayOrders = completedOrders.filter(o => 
@@ -87,6 +88,13 @@ export function useDashboard() {
       const weeklySales = weekOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
       const monthlySales = monthOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
       const totalRevenue = completedOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+
+      // Compare this week vs previous week for a meaningful growth metric
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const prevWeekOrders = completedOrders.filter(o =>
+        new Date(o.order_date) >= twoWeeksAgo && new Date(o.order_date) < weekAgo
+      );
+      const prevWeekSales = prevWeekOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
 
       // === ORDER STATS ===
       const pending = orders?.filter(o => 
@@ -143,12 +151,12 @@ export function useDashboard() {
         weeklySales,
         monthlySales,
         totalRevenue,
-        salesGrowth: calculateGrowth(weeklySales, monthlySales),
+        salesGrowth: calculateGrowth(weeklySales, prevWeekSales),
         totalOrders: orders?.length || 0,
         pendingOrders: pending.length,
         processingOrders: processing.length,
         completedToday: todayOrders.length,
-        totalProducts: inventory?.length || 0,
+        totalProducts: new Set(inventory?.map(i => i.variant_id) || []).size,
         lowStockItems: lowStock.length,
         outOfStock: outOfStock.length,
         inventoryValue,

@@ -170,10 +170,8 @@ export const procurementsAPI = {
 
       // ====================================
       // STEP 2: Calculate and set new procurement status
-      // The DB trigger fires HERE on this status update.
-      // Guard: fetch current status first — if it's already 'Received'
-      // do NOT update again, which would re-fire the trigger and
-      // double-credit inventory (the core bug we're defending against).
+      // The DB trigger fires HERE on this status update and runs
+      // update_inventory_on_procurement() which handles everything else.
       // ====================================
       const { data: allItems } = await supabase
         .from('procurement_items')
@@ -187,23 +185,8 @@ export const procurementsAPI = {
 
       console.log('\n📊 New status:', newStatus);
 
-      // Fetch the procurement's CURRENT status before updating
-      const { data: currentProc } = await supabase
-        .from('procurements')
-        .select('status')
-        .eq('procurement_id', procurementId)
-        .single();
-
-      const currentStatus = currentProc?.status;
-
-      // Only update if the status is actually changing — prevents
-      // re-triggering the DB trigger with the same status value
-      if (newStatus !== currentStatus) {
-        await this.updateStatus(procurementId, newStatus, null);
-        console.log(`\n✅ Status changed: ${currentStatus} → ${newStatus}`);
-      } else {
-        console.log(`\n⏭️ Status unchanged (${currentStatus}), skipping update`);
-      }
+      // This update fires trg_update_inventory_procurement when status = 'Received'
+      await this.updateStatus(procurementId, newStatus, null);
 
       console.log('\n🎉 RECEIVE COMPLETE!\n');
 
@@ -239,7 +222,6 @@ export const procurementsAPI = {
       pending: procurements?.filter(p => p.status === 'Pending').length || 0,
       approved: procurements?.filter(p => p.status === 'Approved').length || 0,
       ordered: procurements?.filter(p => p.status === 'Ordered').length || 0,
-      partial: procurements?.filter(p => p.status === 'Partial').length || 0,
       received: procurements?.filter(p => p.status === 'Received').length || 0,
       totalCost: procurements?.reduce((sum, p) => sum + parseFloat(p.total_cost || 0), 0) || 0
     };
